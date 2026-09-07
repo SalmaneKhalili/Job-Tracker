@@ -1,4 +1,6 @@
 package org.salmanekhalili.jobtrack.dto;
 
-public record AuthResponse() {
+import jakarta.validation.constraints.NotBlank;
+
+public record AuthResponse(@NotBlank String token) {
 }

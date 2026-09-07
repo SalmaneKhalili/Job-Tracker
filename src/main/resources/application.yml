@@ -1,0 +1,16 @@
+spring:
+  flyway:
+    enabled: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/jobtrackdb
+    username: jobtrackdb
+    password: jobtrackdb
+  jpa:
+    hibernate:
+      ddl-auto: validate # this flag is used to make hibernate check his entities against my sql and it fails if they dont match
+    open-in-view: false
+app:
+  jwt:
+    secret: "Wgk//9ILZRZit6a2saZJgjlLBh0XDNgO0Hnb5EtDmEDL35KNSWBN5Q1x12apXR5oXJJ/DVUGccEfA+Lo2B6DWw==" # genereted using openssl rand -base64 64
+    expiration: 86400000

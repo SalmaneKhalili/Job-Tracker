@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=jobtrackdb'
+      - 'POSTGRES_PASSWORD=jobtrackdb'
+      - 'POSTGRES_USER=jobtrackdb'
+    ports:
+      - '5432:5432'

@@ -1,7 +1,7 @@
 package org.salmanekhalili.jobtrack.service;
 
 import lombok.RequiredArgsConstructor;
-import org.salmanekhalili.jobtrack.config.JwtService;
+import org.salmanekhalili.jobtrack.security.JwtService;
 
 import org.salmanekhalili.jobtrack.domain.User;
 import org.salmanekhalili.jobtrack.domain.UserRepository;
@@ -26,7 +26,6 @@ public class AuthService {
         if (userRepository.findByEmail(req.email()).isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered!"); //placeholder till i build proper exception?
         }
-
         User newUser = new User();
         newUser.setEmail(req.email());
         newUser.setName(req.name());

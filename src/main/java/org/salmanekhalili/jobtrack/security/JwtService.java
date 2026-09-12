@@ -1,4 +1,4 @@
-package org.salmanekhalili.jobtrack.config;
+package org.salmanekhalili.jobtrack.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -47,7 +47,4 @@ public class JwtService {
                 .getPayload();
         return Long.valueOf(claims.getSubject());
     }
-
-
-
 }

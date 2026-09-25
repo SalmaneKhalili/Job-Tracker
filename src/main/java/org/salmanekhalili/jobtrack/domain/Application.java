@@ -1,11 +1,11 @@
 package org.salmanekhalili.jobtrack.domain;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 @Entity
 @Getter @Setter
 @Table(name = "applications")
@@ -41,8 +41,20 @@ public class Application {
     private Instant updatedAt;
 
     @PrePersist
-    void onCreate() { appliedAt = updatedAt = Instant.now(); }
+    void onCreate() {
+        // A caller-supplied appliedAt is kept (that is what the from/to filters
+        // range over); only an absent one falls back to "now". Postgres stores
+        // microseconds, so truncate to avoid a response that differs from a
+        // later read of the same row.
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
+        if (appliedAt == null) {
+            appliedAt = now;
+        } else {
+            appliedAt = appliedAt.truncatedTo(ChronoUnit.MICROS);
+        }
+        updatedAt = now;
+    }
 
     @PreUpdate
-    void onUpdate() { updatedAt = Instant.now(); }
+    void onUpdate() { updatedAt = Instant.now().truncatedTo(ChronoUnit.MICROS); }
 }

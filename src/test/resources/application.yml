@@ -1,0 +1,22 @@
+spring:
+  docker:
+    compose:
+      # The integration suite brings its own Postgres (Testcontainers, or the
+      # one named by IT_DB_URL); starting compose from a test context would
+      # only race for port 5432. In Boot 4 this is a nested flag, not a boolean.
+      skip:
+        in-tests: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+app:
+  jwt:
+    secret: dGVzdC1vbmx5LXNlY3JldC1tdXN0LWJlLWF0LWxlYXN0LTMyLWJ5dGVzLWxvbmc=
+    expiration: 3600000
+logging:
+  level:
+    root: WARN
+    org.salmanekhalili.jobtrack: INFO
+    org.testcontainers: INFO
+    org.flywaydb: INFO

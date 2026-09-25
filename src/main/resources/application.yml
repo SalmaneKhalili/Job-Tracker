@@ -1,16 +1,45 @@
 spring:
-  flyway:
-    enabled: true
+  application:
+    name: jobtrack
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/jobtrackdb
-    username: jobtrackdb
-    password: jobtrackdb
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/jobtrackdb}
+    username: ${DB_USER:jobtrackdb}
+    password: ${DB_PASSWORD:jobtrackdb}
   jpa:
     hibernate:
-      ddl-auto: validate # this flag is used to make hibernate check his entities against my sql and it fails if they dont match
+      # Hibernate validates the entities against the Flyway-owned schema and
+      # refuses to start on any mismatch. Never let Hibernate own the schema.
+      ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        # Hard ceiling: a client cannot ask for the whole table in one page.
+        max-page-size: 100
 app:
   jwt:
-    secret: "Wgk//9ILZRZit6a2saZJgjlLBh0XDNgO0Hnb5EtDmEDL35KNSWBN5Q1x12apXR5oXJJ/DVUGccEfA+Lo2B6DWw==" # genereted using openssl rand -base64 64
-    expiration: 86400000
+    # openssl rand -base64 64 -- must never be committed outside local development.
+    secret: ${JWT_SECRET:Wgk//9ILZRZit6a2saZJgjlLBh0XDNgO0Hnb5EtDmEDL35KNSWBN5Q1x12apXR5oXJJ/DVUGccEfA+Lo2B6DWw==}
+    expiration: ${JWT_EXPIRATION_MS:86400000}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+logging:
+  level:
+    root: INFO
+    org.salmanekhalili.jobtrack: INFO

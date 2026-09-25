@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Getter
@@ -29,6 +30,8 @@ public class Note {
 
     @PrePersist
     void onCreate() {
-        this.createdAt = Instant.now();
+        // Postgres stores microseconds; truncating here means the timestamp in
+        // this response is the same one a later read will return.
+        this.createdAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 }

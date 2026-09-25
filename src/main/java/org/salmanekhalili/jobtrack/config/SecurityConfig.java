@@ -1,8 +1,8 @@
 package org.salmanekhalili.jobtrack.config;
 
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.salmanekhalili.jobtrack.security.JsonErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
+    private final JsonErrorHandler jsonErrorHandler;
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) {
@@ -29,8 +30,9 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .exceptionHandling(e -> e.authenticationEntryPoint(
-                        (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")));
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(jsonErrorHandler)
+                        .accessDeniedHandler(jsonErrorHandler));
         return http.build();
     }
 }

@@ -1,10 +1,8 @@
 # jobtrack
 
-A production-shaped job application tracker REST API.
+REST API for tracking job applications. Java 21, Spring Boot 4.1, PostgreSQL 17.
 
-Built to exercise the full entry-level backend loop: REST design, JWT auth,
-PostgreSQL persistence, data migrations, validation, and tests against a real
-database.
+Containers, compose and CI are not built. See [docs/TODO.md](docs/TODO.md).
 
 ## Stack
 
@@ -21,93 +19,80 @@ database.
 | Tests | JUnit 5, Mockito, AssertJ, Testcontainers |
 | Ops | Actuator, correlation ids, OpenAPI |
 
-Containers, compose and CI are deliberately **not** built here — that work is
-outlined in [`docs/TODO.md`](docs/TODO.md).
+## Features
 
-## What it does
-
-- Register / login, issue a signed JWT.
-- Track job applications with a status lifecycle
-  (`APPLIED → INTERVIEW → OFFER | REJECTED | WITHDRAWN`).
-- Attach notes to an application.
-- List applications with pagination, sorting and filters (status, company,
-  date range).
-- Per-status statistics for the dashboard.
-- Every resource is scoped to its owner: a user can only read/write their own
-  records. That rule is enforced in the query, not just the controller — and a
-  record belonging to somebody else answers `404`, identically to a record that
-  does not exist.
-
-## Domain model
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full UML (class diagram,
-package tree, API table, security flow, error shapes, and a complete curl
-reference).
+- Register and log in, get a signed JWT.
+- Track applications with a status: `APPLIED`, `INTERVIEW`, `OFFER`,
+  `REJECTED`, `WITHDRAWN`. The API does not police the order, so a mis-click
+  is correctable.
+- Notes on an application.
+- List with pagination, sorting, and filters on status, company and date range.
+- Per-status counts for a dashboard.
+- Every query is owner scoped, not just the controller. Another user's record
+  returns 404 with the same body as a record that does not exist.
 
 ```
 User 1 ──< N Application 1 ──< N Note
 ```
 
+Full design notes in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Quickstart
 
-Prerequisites: JDK 21, and a PostgreSQL 17 — either the `postgres` service in
-`compose.yaml`, or one you already run.
+Needs JDK 21 and a PostgreSQL 17: the `postgres` service in `compose.yaml`, or
+one you already run.
 
 ```bash
-# 1. start postgres (the only service in compose.yaml)
 docker compose up -d postgres
-
-# 2. run the app
 ./mvnw spring-boot:run
+```
 
-# 3. register a user
-curl -s -X POST http://localhost:8080/api/auth/register \
-  -H 'Content-Type: application/json' \
+```bash
+BASE=http://localhost:8080
+JSON='Content-Type: application/json'
+
+curl -s -X POST $BASE/api/auth/register -H "$JSON" \
   -d '{"email":"you@example.com","name":"Salmane","password":"secret1234"}'
 
-# 4. login to get a token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"secret1234"}' \
-  | jq -r .token)
+TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "$JSON" \
+  -d '{"email":"you@example.com","password":"secret1234"}' | jq -r .token)
 
-# 5. create an application
-curl -s -X POST http://localhost:8080/api/applications \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
+curl -s -X POST $BASE/api/applications \
+  -H "Authorization: Bearer $TOKEN" -H "$JSON" \
   -d '{"company":"Example GmbH","role":"Backend Engineer","status":"APPLIED","jobUrl":"https://example.com/jobs/1"}'
 ```
 
-Swagger UI: <http://localhost:8080/swagger-ui.html> (the "Authorize" button takes
-the token from step 4).
-
-Full curl reference lives at the bottom of `docs/ARCHITECTURE.md`.
+Swagger UI: <http://localhost:8080/swagger-ui.html>. The Authorize button takes
+the token. Full curl reference at the bottom of
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Configuration
 
-Everything has a working local default and is overridable by environment
-variable:
+Every value has a working local default and an environment override.
 
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/jobtrackdb` | |
-| `DB_USER` / `DB_PASSWORD` | `jobtrackdb` | |
-| `JWT_SECRET` | a dev key in `application.yml` | `openssl rand -base64 64`; set it in the environment for anything but local dev |
-| `JWT_EXPIRATION_MS` | `86400000` | 24 h |
+| Variable | Default |
+| --- | --- |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/jobtrackdb` |
+| `DB_USER` | `jobtrackdb` |
+| `DB_PASSWORD` | `jobtrackdb` |
+| `JWT_SECRET` | a dev key in `application.yml` |
+| `JWT_EXPIRATION_MS` | `86400000` (24 h) |
+
+`JWT_SECRET` is base64 and must decode to at least 256 bits for HS256.
+Generate one with `openssl rand -base64 64`.
 
 ## Tests
 
 ```bash
-./mvnw test     # unit tier: Mockito + validation. No Docker needed.
-./mvnw verify   # + integration tier against a real Postgres (needs Docker)
+./mvnw test     # unit tier, no Docker needed
+./mvnw verify   # adds the integration tier, needs Docker
 ```
 
-The integration suite covers register → login → CRUD → pagination → filters →
-notes → stats, plus 401 on missing/garbage/expired/foreign-key tokens, 409 on
-duplicate email, 400 validation, and cross-user isolation across applications,
-notes and statistics.
+Integration coverage: register, login, CRUD, pagination, filters, notes, stats,
+401 on missing/garbage/expired/foreign-key tokens, 409 on duplicate email, 400
+validation, cross-user isolation across applications, notes and statistics.
 
-No Docker daemon? Point the suite at a database you already have:
+No Docker daemon? Point the suite at a database you already have.
 
 ```bash
 IT_DB_URL=jdbc:postgresql://localhost:5432/jobtrackdb \
@@ -117,6 +102,5 @@ IT_DB_USER=jobtrackdb IT_DB_PASSWORD=jobtrackdb ./mvnw verify
 ## Status
 
 - [x] Implementation
-- [x] Green test suite — 95 tests (33 unit, 62 integration) pass against a real
-      PostgreSQL 17.11, including the cross-user isolation matrix
-- [ ] Docker / compose / CI — specified in [`docs/TODO.md`](docs/TODO.md)
+- [x] 95 tests green (33 unit, 62 integration) against real PostgreSQL 17.11
+- [ ] Docker, compose, CI ([docs/TODO.md](docs/TODO.md))
